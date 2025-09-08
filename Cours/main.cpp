@@ -11,6 +11,20 @@ unsigned int createVertexShader(const char* source[]) {
 	glShaderSource(vertexShaderID, 1, source, NULL);
 	glCompileShader(vertexShaderID);
 
+	int isValid;
+	glGetShaderiv(vertexShaderID, GL_COMPILE_STATUS, &isValid);
+	if (!isValid) {
+		int lenght;
+		glGetShaderiv(vertexShaderID, GL_INFO_LOG_LENGTH, &lenght);
+		char* message = new char[lenght];
+		glGetShaderInfoLog(vertexShaderID, lenght, nullptr, message);
+		SDL_Log("%s", message);
+		delete[] message;
+		glDeleteShader(vertexShaderID);
+
+		return 0;
+	}
+
 	return vertexShaderID;
 }
 
@@ -22,6 +36,20 @@ unsigned int createProgram(unsigned int vertexShaderID) {
 	unsigned int programID = glCreateProgram();
 	glAttachShader(programID, vertexShaderID);
 	glLinkProgram(programID);
+
+	int isValid;
+	glGetProgramiv(programID, GL_COMPILE_STATUS, &isValid);
+	if (!isValid) {
+		int lenght;
+		glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &lenght);
+		char* message = new char[lenght];
+		glGetProgramInfoLog(programID, lenght, nullptr, message);
+		SDL_Log("%s", message);
+		delete[] message;
+		glDeleteProgram(programID);
+
+		return 0;
+	}
 
 	return programID;
 }
@@ -64,33 +92,67 @@ int main(int args, char* argv[]) {
 		"}"
 	};
 
-	unsigned int vertexShaderID = createVertexShader(sourceA);
-	unsigned int programID = createProgram(vertexShaderID);
-	glDeleteShader(vertexShaderID);
+	unsigned int vertexShaderIDA = createVertexShader(sourceA);
+	unsigned int programIDA = createProgram(vertexShaderIDA);
+	glDeleteShader(vertexShaderIDA);
 	unsigned int vertexArrayID = createVertexArray();
 
+	
 
+	const char* sourceB[] = {
+		"#version 460 core \n"
+		"vec2 line[2] = {"
+		"		vec2(-0.5, 0.5),"
+		"		vec2(0.5, -0.5)"
+		"};"
+		"void main() {"
+		"	gl_Position = vec4(line[gl_VertexID], 0.0, 1.0);"
+		"}"
+	};
+
+	unsigned int vertexShaderIDB = createVertexShader(sourceB);
+	unsigned int programIDB = createProgram(vertexShaderIDB);
+	glDeleteShader(vertexShaderIDB);
+
+	const char* sourceC[] = {
+		"#version 460 core \n"
+		"vec2 triangle[3] = {"
+		"		vec2(0.0, 0.5),"
+		"		vec2(0.5, -0.5),"
+		"		vec2(-0.5, -0.5)"
+		"};"
+		"void main() {"
+		"	gl_Position = vec4(triangle[gl_VertexID], 0.0, 1.0);"
+		"}"
+	};
+
+	unsigned int vertexShaderIDC = createVertexShader(sourceC);
+	unsigned int programIDC = createProgram(vertexShaderIDC);
+	glDeleteShader(vertexShaderIDC);
+
+
+	//Boucle de jeu
 	bool isUp = true;
-	while (isUp)
-	{
+	while (isUp) {
+		//Gestion des évènements
 		while (SDL_PollEvent(&sdlEvent)){
 
 			switch(sdlEvent.type) {
 				case SDL_EVENT_KEY_DOWN: 
-				SDL_Log("windowID : %i, Type : %s, Key : %d", sdlEvent.window.windowID, "SDL_EVENT_KEY_DOWN", sdlEvent.key.key);
+				//SDL_Log("windowID : %i, Type : %s, Key : %d", sdlEvent.window.windowID, "SDL_EVENT_KEY_DOWN", sdlEvent.key.key);
 				break;
 					
 				case SDL_EVENT_MOUSE_BUTTON_DOWN: {
 				char buttons[6][20] = {"", "SDL_BUTTON_LEFT", "SDL_BUTTON_MIDDLE", "SDL_BUTTON_RIGHT", "SDL_BUTTON_X1", "SDL_BUTTON_X2"};
-				SDL_Log("windowID : %i,Type : %s, Button : %s, Clicks : %i", sdlEvent.window.windowID, "SDL_EVENT_MOUSE_BUTTON_DOWN");
+				//SDL_Log("windowID : %i,Type : %s, Button : %s, Clicks : %i", sdlEvent.window.windowID, "SDL_EVENT_MOUSE_BUTTON_DOWN");
 				break;
 				}
 				case SDL_EVENT_MOUSE_MOTION: 
-				SDL_Log("windowID : %i, Type : %s, x : %f, y : %f", sdlEvent.window.windowID, "SDL_EVENT_MOUSE_MOTION", sdlEvent.motion.x, sdlEvent.motion.y, sdlEvent.motion.xrel, sdlEvent.motion.yrel)	;
+				//SDL_Log("windowID : %i, Type : %s, x : %f, y : %f", sdlEvent.window.windowID, "SDL_EVENT_MOUSE_MOTION", sdlEvent.motion.x, sdlEvent.motion.y, sdlEvent.motion.xrel, sdlEvent.motion.yrel)	;
 				break;
 
 				case SDL_EVENT_WINDOW_RESIZED:
-				SDL_Log("windowID : %i, Type : %s, Data1 : %i, Data2 : %i", sdlEvent.window.windowID, "SDL_EVENT_WINDOW_RESIZED", sdlEvent.window.data1, sdlEvent.window.data2)	;
+				//SDL_Log("windowID : %i, Type : %s, Data1 : %i, Data2 : %i", sdlEvent.window.windowID, "SDL_EVENT_WINDOW_RESIZED", sdlEvent.window.data1, sdlEvent.window.data2)	;
 				break;
 
 				case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
@@ -119,7 +181,7 @@ int main(int args, char* argv[]) {
 			if (sdlWindowA) {
 				SDL_GL_MakeCurrent(sdlWindowA, glContext);
 				glClear(GL_COLOR_BUFFER_BIT);
-				glUseProgram(programID);
+				glUseProgram(programIDA);
 				glBindVertexArray(vertexArrayID);
 				//Dessiner
 				glDrawArrays(GL_POINTS, 0, 1);
@@ -128,8 +190,9 @@ int main(int args, char* argv[]) {
 			if (sdlWindowB) {
 				SDL_GL_MakeCurrent(sdlWindowB, glContext);
 				glClear(GL_COLOR_BUFFER_BIT);
-				glUseProgram(programID);
+				glUseProgram(programIDB);
 				glBindVertexArray(vertexArrayID);
+				glDrawArrays(GL_LINES, 0, 2);
 				///TODO: Dessiner
 				SDL_GL_SwapWindow(sdlWindowB);
 
@@ -137,8 +200,9 @@ int main(int args, char* argv[]) {
 			if (sdlWindowC) {
 				SDL_GL_MakeCurrent(sdlWindowC, glContext);
 				glClear(GL_COLOR_BUFFER_BIT);
-				glUseProgram(programID);
+				glUseProgram(programIDC);
 				glBindVertexArray(vertexArrayID);
+				glDrawArrays(GL_TRIANGLES, 0, 3);
 				///TODO: Dessiner
 				SDL_GL_SwapWindow(sdlWindowC);
 
@@ -152,7 +216,9 @@ int main(int args, char* argv[]) {
 	}
 	
 	glDeleteVertexArrays(1, &vertexArrayID);
-	glDeleteProgram(programID);
+	glDeleteProgram(programIDA);
+	glDeleteProgram(programIDB);
+	glDeleteProgram(programIDC);
 	SDL_GL_DestroyContext(glContext);
 
 	SDL_Quit();
