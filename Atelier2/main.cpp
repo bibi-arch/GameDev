@@ -5,10 +5,6 @@
 #include <SDL3/SDL_keycode.h>
 
 
-#define SDLK_L                      0x0000006cu /**< 'l' */
-#define SDLK_T                      0x00000074u /**< 't' */
-#define SDLK_P                      0x00000070u /**< 'p' */
-
 /// @brief Instanciation d'un nuanceur de sommet.
 /// @param source Code source du nuanceur.
 /// @return Identificateur de nuanceur.
@@ -84,59 +80,40 @@ int main(int argc, char *argv[])
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-	SDL_Window *sdlWindowA = SDL_CreateWindow("A", 500, 500, SDL_WINDOW_OPENGL);
+	SDL_Window *sdlWindow = SDL_CreateWindow("Atelier 2", 500, 500, SDL_WINDOW_OPENGL);
 
-	SDL_GLContext glContext = SDL_GL_CreateContext(sdlWindowA);
+	SDL_GLContext glContext = SDL_GL_CreateContext(sdlWindow);
 	glewInit();
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
-	SDL_Event sdlEvent;
-
-	const char *sourceA[] = {
+	const char *source[] = {
 		"#version 460 core \n"
-		"void main() {"
-		"	gl_PointSize = 3;"
-		"	gl_Position = vec2(0.0, 0.5),"
-		"				  vec2(0.5, -0.5),"
-		"				  vec2(-0.5, -0.5)"
-		"}"
-	};
-
-	const char *sourceB[] = {
-		"#version 460 core \n"
-		"vec2 line[3] = {"
-		"		vec2(-0.5, 0.5),"
-		"		vec2(0.5, -0.5),"
-		"		vec2(-0.5, -0.5)"
+		"vec2 points[3] = {"
+		"   vec2(0.0, 0.5),"
+		"   vec2(0.5, -0.5),"
+		"   vec2(-0.5, -0.5)"
 		"};"
 		"void main() {"
-		"	gl_Position = vec4(line[gl_VertexID], 0.0, 1.0);"
+		"   gl_PointSize = 3.0;"
+		"   gl_Position = vec4(points[gl_VertexID], 0.0, 1.0);"
 		"}"
 	};
 
-	const char *sourceC[] = {
-		"#version 460 core \n"
-		"vec2 triangle[3] = {"
-		"		vec2(0.0, 0.5),"
-		"		vec2(0.5, -0.5),"
-		"		vec2(-0.5, -0.5)"
-		"};"
-		"void main() {"
-		"	gl_Position = vec4(triangle[gl_VertexID], 0.0, 1.0);"
-		"}"
-	};
+	unsigned int vertexShaderID = createVertexShader(source);
+	unsigned int programID = createProgram(vertexShaderID);
+	glDeleteShader(vertexShaderID);
 
-	unsigned int vertexShaderIDA;
-	unsigned int programIDA = createProgram(vertexShaderIDA);
-	glDeleteShader(vertexShaderIDA);
 	unsigned int vertexArrayID = createVertexArray();
 
+	GLenum mode = -1;
 
 	// Boucle de jeu
 	bool isUp = true;
 	while (isUp)
 	{
+		SDL_Event sdlEvent;
+
 		// Gestion des évènements
 		while (SDL_PollEvent(&sdlEvent))
 		{
@@ -145,49 +122,55 @@ int main(int argc, char *argv[])
 			{
 			case SDL_EVENT_KEY_DOWN:
 			{
-				SDL_Log("windowID : %i, Type : %s, Key : %d", sdlEvent.window.windowID, "SDL_EVENT_KEY_DOWN", sdlEvent.key.key);				
-				switch (sdlEvent.key.key)
+				switch (sdlEvent.key.scancode)
 				{
-				case SDLK_P:
-					vertexShaderIDA = createVertexShader(sourceA);
-								
+				case SDL_SCANCODE_P:
+					SDL_SetWindowTitle(sdlWindow, "Points");
+					mode = GL_POINTS;
 					break;
-
-
-				case SDLK_L:
-				{
-					vertexShaderIDA = createVertexShader(sourceB);
-										
+				case SDL_SCANCODE_L:
+					SDL_SetWindowTitle(sdlWindow, "Lignes");
+					mode = GL_LINES;
 					break;
-				};
-
-				case SDLK_T:
-				{
-					vertexShaderIDA = createVertexShader(sourceB);
-					
+				case SDL_SCANCODE_T:
+					SDL_SetWindowTitle(sdlWindow, "Triangles");
+					mode = GL_TRIANGLES;
+					break;
+				default:
 					break;
 				}
-					default:
-					break;
-				}
+				break;
 			}
 
+			case SDL_EVENT_KEY_UP:
+				SDL_SetWindowTitle(sdlWindow, "Atelier 2");
+				break;
 			case SDL_EVENT_MOUSE_BUTTON_DOWN:
 			{
-				char buttons[6][20] = {"", "SDL_BUTTON_LEFT", "SDL_BUTTON_MIDDLE", "SDL_BUTTON_RIGHT", "SDL_BUTTON_X1", "SDL_BUTTON_X2"};
-				// SDL_Log("windowID : %i,Type : %s, Button : %s, Clicks : %i", sdlEvent.window.windowID, "SDL_EVENT_MOUSE_BUTTON_DOWN");
-				break;
-			}
-			case SDL_EVENT_MOUSE_MOTION:
-				// SDL_Log("windowID : %i, Type : %s, x : %f, y : %f", sdlEvent.window.windowID, "SDL_EVENT_MOUSE_MOTION", sdlEvent.motion.x, sdlEvent.motion.y, sdlEvent.motion.xrel, sdlEvent.motion.yrel)	;
-				break;
-
-
-			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-				if (sdlEvent.window.windowID == SDL_GetWindowID(sdlWindowA))
+				switch (sdlEvent.button.button)
 				{
-					SDL_DestroyWindow(sdlWindowA);
-					sdlWindowA = nullptr;
+				case SDL_BUTTON_LEFT:
+					glClearColor(1.0, 0.0, 0.0, 1.0);
+					break;
+				case SDL_BUTTON_RIGHT:
+					glClearColor(0.0, 0.0, 1.0, 1.0);
+					break;
+				case SDL_BUTTON_MIDDLE:
+					glClearColor(0.0, 1.0, 0.0, 1.0);
+					break;
+				default:
+					break;
+				}
+			}
+			break;
+			case SDL_EVENT_MOUSE_BUTTON_UP:
+				glClearColor(1.0, 1.0, 1.0, 1.0);
+				break;
+			case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+				if (sdlEvent.window.windowID == SDL_GetWindowID(sdlWindow))
+				{
+					SDL_DestroyWindow(sdlWindow);
+					sdlWindow = nullptr;
 				}
 				break;
 
@@ -198,27 +181,23 @@ int main(int argc, char *argv[])
 			default:
 				break;
 			}
-			// Gestion de l'affichage.
-			if (sdlWindowA)
-			{
-				SDL_GL_MakeCurrent(sdlWindowA, glContext);
-				glClear(GL_COLOR_BUFFER_BIT);
-				glUseProgram(programIDA);
-				glBindVertexArray(vertexArrayID);
-				// Dessiner
-				glDrawArrays(GL_POINTS, 0, 1);
-				SDL_GL_SwapWindow(sdlWindowA);
-			}
 		}
 
-		/// TODO: Gestion des événements.
-		/// TODO: GEstion des mises à jour.
-		/// TODO: Gestion de l'affichage
+		if (sdlWindow)
+		{
+			SDL_GL_MakeCurrent(sdlWindow, glContext);
+			glClear(GL_COLOR_BUFFER_BIT);
+				glUseProgram(programID);
+				glBindVertexArray(vertexArrayID);
+				glDrawArrays(mode, 0, 3);
+			SDL_GL_SwapWindow(sdlWindow);
+		}
 	}
 
 	glDeleteVertexArrays(1, &vertexArrayID);
-	glDeleteProgram(programIDA);
+	glDeleteProgram(programID);
 	SDL_GL_DestroyContext(glContext);
+	SDL_DestroyWindow(sdlWindow);
 
 	SDL_Quit();
 
