@@ -43,6 +43,7 @@ unsigned int createProgram(unsigned int vertexShaderID)
 
 	int isValid;
 	glGetProgramiv(programID, GL_COMPILE_STATUS, &isValid);
+	//glGetProgramiv(programID, GL_LINK_STATUS, &isValid);
 	if (!isValid)
 	{
 		int lenght;
