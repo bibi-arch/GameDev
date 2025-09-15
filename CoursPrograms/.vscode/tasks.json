@@ -1,0 +1,31 @@
+{
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "Compilation",
+			"command": "cl.exe",
+			"args": [
+				"-w",
+				"/Z7",
+				"/EHsc",
+				"/nologo",
+				"/I${workspaceFolder}/build/include/",
+				"${workspaceFolder}/main.cpp",
+				"/Fe${workspaceFolder}/build/program.exe",
+				"/Fo${workspaceFolder}/build/",
+				"/link",
+				"/libpath:${workspaceFolder}/build/lib/",
+				"opengl32.lib",
+				"glew32.lib",
+				"SDL3.lib",
+				"SDL3_ttf.lib",
+				"SDL3_image.lib",
+				"/MACHINE:X64",
+				"/Subsystem:Windows"
+			],
+			"group": "build",
+			"detail": "Compilation pour Windows"
+		}		
+	],
+	"version": "2.0.0"
+}

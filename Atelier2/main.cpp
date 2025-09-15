@@ -1,4 +1,5 @@
 #include <GL/glew.h>
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_opengl.h>
 #include <SDL3/SDL_main.h>
@@ -43,7 +44,6 @@ unsigned int createProgram(unsigned int vertexShaderID)
 
 	int isValid;
 	glGetProgramiv(programID, GL_COMPILE_STATUS, &isValid);
-	//glGetProgramiv(programID, GL_LINK_STATUS, &isValid);
 	if (!isValid)
 	{
 		int lenght;
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
 					break;
 				case SDL_SCANCODE_L:
 					SDL_SetWindowTitle(sdlWindow, "Lignes");
-					mode = GL_LINES;
+					mode = GL_LINE_LOOP;
 					break;
 				case SDL_SCANCODE_T:
 					SDL_SetWindowTitle(sdlWindow, "Triangles");
@@ -142,9 +142,9 @@ int main(int argc, char *argv[])
 				}
 				break;
 			}
-
 			case SDL_EVENT_KEY_UP:
 				SDL_SetWindowTitle(sdlWindow, "Atelier 2");
+				mode = -1;
 				break;
 			case SDL_EVENT_MOUSE_BUTTON_DOWN:
 			{
